@@ -1,0 +1,14 @@
+# generated experiment outputs (large, reproducible via run_anomalydino*.py)
+anomalyDINO/AnomalyDINO/results_VisA/
+
+# converted dataset (symlinks into an external mount, not portable)
+anomalyDINO/AnomalyDINO/data/
+
+# python
+__pycache__/
+*.pyc
+.venv*/
+venv*/
+
+# misc
+.DS_Store

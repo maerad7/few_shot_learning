@@ -1,0 +1,266 @@
+<title>The AnomalyDINO Paper</title>
+<style>
+  .doc-root {
+    color-scheme: light;
+    --bg-page:        #f9f9f7;
+    --bg-surface:     #fcfcfb;
+    --bg-band:        #f2f1ec;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --grid:           #e1e0d9;
+    --axis:           #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --accent:         #2a78d6;
+    --accent-2:       #eb6834;
+    --accent-3:       #1baf7a;
+    --bad:            #e34948;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .doc-root {
+      color-scheme: dark;
+      --bg-page:        #0d0d0d;
+      --bg-surface:     #1a1a19;
+      --bg-band:        #202020;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --grid:           #2c2c2a;
+      --axis:           #383835;
+      --border:         rgba(255,255,255,0.10);
+      --accent:         #3987e5;
+      --accent-2:       #d95926;
+      --accent-3:       #199e70;
+      --bad:            #e66767;
+    }
+  }
+  :root[data-theme="dark"] .doc-root {
+    color-scheme: dark;
+    --bg-page:        #0d0d0d;
+    --bg-surface:     #1a1a19;
+    --bg-band:        #202020;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --grid:           #2c2c2a;
+    --axis:           #383835;
+    --border:         rgba(255,255,255,0.10);
+    --accent:         #3987e5;
+    --accent-2:       #d95926;
+    --accent-3:       #199e70;
+    --bad:            #e66767;
+  }
+
+  * { box-sizing: border-box; }
+  .doc-root {
+    background: var(--bg-page); color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.6; padding-bottom: 64px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 28px; }
+
+  .masthead { padding: 56px 0 32px; border-bottom: 1px solid var(--border); }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin: 0 0 14px;
+  }
+  h1 { font-size: clamp(28px, 4.4vw, 40px); font-weight: 700; letter-spacing: -0.02em; margin: 0 0 8px; text-wrap: balance; }
+  .byline { font-size: 13.5px; color: var(--text-secondary); margin: 0 0 18px; }
+  .dek { font-size: 15.5px; color: var(--text-secondary); max-width: 62ch; margin: 0 0 20px; font-style: italic; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 12px; color: var(--text-secondary); background: var(--bg-surface);
+    border: 1px solid var(--border); border-radius: 5px; padding: 5px 10px;
+  }
+
+  section { padding: 34px 0; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: none; }
+  h2 {
+    font-size: 19px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 6px;
+    display: flex; align-items: baseline; gap: 9px;
+  }
+  h2 .num { color: var(--text-muted); font-family: ui-monospace, monospace; font-size: 14px; font-weight: 500; }
+  .section-dek { font-size: 14px; color: var(--text-secondary); max-width: 64ch; margin: 0 0 16px; }
+  p { font-size: 14.5px; color: var(--text-primary); max-width: 66ch; margin: 0 0 12px; }
+  strong { font-weight: 700; }
+  em { color: var(--text-secondary); }
+  code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; font-size: 12.5px;
+    background: var(--bg-band); padding: 1px 6px; border-radius: 4px;
+  }
+  ul.plain, ol.plain { margin: 0 0 12px; padding-left: 20px; }
+  ul.plain li, ol.plain li { font-size: 14.5px; margin-bottom: 9px; max-width: 62ch; }
+  ul.plain li strong, ol.plain li strong { color: var(--text-primary); }
+
+  /* stat tiles */
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 4px; }
+  .stat-tile { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .stat-label { font-size: 12px; color: var(--text-secondary); margin: 0 0 8px; }
+  .stat-value { font-size: 25px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .stat-note { font-size: 11.5px; color: var(--text-muted); margin: 0; }
+
+  /* tables */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; margin: 14px 0; }
+  table { border-collapse: collapse; width: 100%; min-width: 480px; background: var(--bg-surface); font-size: 13px; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  td.num, th.num { text-align: right; font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+  thead th {
+    color: var(--text-secondary); font-weight: 600; font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: 0.04em; background: var(--bg-band);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tr.hl td { font-weight: 700; }
+  tr.hl td:first-child { color: var(--accent); }
+
+  /* callout */
+  .callout {
+    background: var(--bg-band); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: 8px; padding: 14px 18px; margin: 16px 0;
+  }
+  .callout p { margin: 0; font-size: 13.5px; }
+  .callout .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); font-weight: 700; margin: 0 0 6px; }
+
+  /* failure case cards */
+  .fail-card {
+    background: var(--bg-surface); border: 1px solid var(--border); border-left: 3px solid var(--bad);
+    border-radius: 8px; padding: 14px 18px; margin: 0 0 12px;
+  }
+  .fail-card h4 { margin: 0 0 6px; font-size: 14px; font-weight: 700; }
+  .fail-card p { margin: 0; font-size: 13.5px; }
+
+  footer { padding: 36px 0 8px; }
+  .fine { font-size: 11.5px; color: var(--text-muted); }
+  .links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+  .links a {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; font-size: 12px;
+    color: var(--accent); text-decoration: none; border: 1px solid var(--border); border-radius: 5px;
+    padding: 5px 10px; background: var(--bg-surface);
+  }
+</style>
+
+<div class="doc-root">
+  <div class="wrap">
+
+    <header class="masthead">
+      <p class="eyebrow">Paper digest</p>
+      <h1>The AnomalyDINO Paper</h1>
+      <p class="byline">Damm, Laszkiewicz, Lederer, Fischer — Ruhr University Bochum &amp; University of Hamburg · WACV 2025 · arXiv:2405.14529</p>
+      <p class="dek">"Anomaly detection requires better representations" — so skip the classifier, skip the training, and let a strong frozen backbone plus a memory bank do the work.</p>
+      <div class="badges">
+        <span class="badge">vision-only (no CLIP, no LLM)</span>
+        <span class="badge">training-free</span>
+        <span class="badge">MVTec-AD + VisA</span>
+        <span class="badge">code: github.com/dammsi/AnomalyDINO</span>
+      </div>
+    </header>
+
+    <section id="claim">
+      <h2><span class="num">01</span> The headline claim</h2>
+      <p class="section-dek">A simple recipe — frozen DINOv2 features + 1-NN memory bank — matches or beats far more complex vision-language few-shot detectors, while running an order of magnitude faster.</p>
+      <div class="stat-row">
+        <div class="stat-tile">
+          <p class="stat-label">MVTec-AD, 1-shot AUROC</p>
+          <p class="stat-value">93.1% → 96.6%</p>
+          <p class="stat-note">best training-free result, halving the few-shot/full-shot gap</p>
+        </div>
+        <div class="stat-tile">
+          <p class="stat-label">VisA, k ≥ 8 shots</p>
+          <p class="stat-value">new SOTA</p>
+          <p class="stat-note">across all training-free few-shot detectors</p>
+        </div>
+        <div class="stat-tile">
+          <p class="stat-label">Inference speed</p>
+          <p class="stat-value">~60 ms/sample</p>
+          <p class="stat-note">≥10× faster than competing few-shot methods, single A40 GPU</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="method">
+      <h2><span class="num">02</span> The method, in one paragraph</h2>
+      <p class="section-dek">Full mechanism and diagrams live in <code>docs/architecture.html</code> — this is the two-sentence version plus the paper's own equations.</p>
+      <p>Embed a few reference images with a <strong>frozen DINOv2</strong>, store their patch vectors in a memory bank <code>M</code>, then score a test patch <code>p</code> by its distance to the nearest bank entry, <code>d<sub>NN</sub>(p; M) := min<sub>p_ref∈M</sub> d(p, p_ref)</code> using cosine distance. The image score aggregates all patch distances via <strong>the mean of the top 1%</strong> — an empirical value-at-risk at the 99th percentile, chosen because it weights the defective region heavily without letting one noisy patch dominate. Two cheap preprocessing steps do the rest of the work: <strong>masking</strong> (PCA-threshold the patch tokens to drop background) and <strong>rotation augmentation</strong> (8× per reference image, to widen a thin memory bank).</p>
+    </section>
+
+    <section id="results">
+      <h2><span class="num">03</span> Zero-shot: how it stacks up</h2>
+      <p class="section-dek">The cleanest apples-to-apples comparison in the paper (Table 4) — detection AUROC, no training data at all.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Setting</th><th>Method</th><th class="num">MVTec-AD</th><th class="num">VisA</th></tr></thead>
+          <tbody>
+            <tr><td rowspan="3">0-shot<br><span style="color:var(--text-muted); font-weight:400;">(vision-language, prompted)</span></td><td>WinCLIP</td><td class="num">91.8</td><td class="num">78.1</td></tr>
+            <tr><td>AnomalyCLIP</td><td class="num">91.5</td><td class="num">82.1</td></tr>
+            <tr><td>APRIL-GAN</td><td class="num">86.1</td><td class="num">78.0</td></tr>
+            <tr><td rowspan="4">batched 0-shot<br><span style="color:var(--text-muted); font-weight:400;">(vision-only, whole test batch)</span></td><td>ACR</td><td class="num">85.8</td><td class="num">—</td></tr>
+            <tr><td>MuSc</td><td class="num">97.8</td><td class="num">92.8</td></tr>
+            <tr class="hl"><td>AnomalyDINO-S (448)</td><td class="num">93.0</td><td class="num">89.7</td></tr>
+            <tr class="hl"><td>AnomalyDINO-S (672)</td><td class="num">94.2</td><td class="num">90.7</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>AnomalyDINO beats every prompt-based 0-shot method by a wide margin without ever describing the object in language, and trails only MuSc (which adds extra re-scoring/aggregation machinery on top of the same batched-comparison idea) in the batched setting.</p>
+      <div class="callout">
+        <p class="k">Cross-check against this project's own run</p>
+        <p>Our reproduction (<code>docs/visa_results.html</code>) got <strong>89.75%</strong> mean batched zero-shot AUROC on VisA at 448px — within 0.05pp of the paper's own AnomalyDINO-S (448) number (89.7%). Good confirmation the local pipeline matches the published method.</p>
+      </div>
+
+      <h2 style="margin-top:28px;"><span class="num">03b</span> Few-shot: how it grows</h2>
+      <p class="section-dek">AnomalyDINO-S (672px), the paper's own numbers (Tables 6–7) — detection AUROC, mean over all categories, 3 seeds.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Dataset</th><th class="num">1-shot</th><th class="num">2-shot</th><th class="num">4-shot</th><th class="num">8-shot</th><th class="num">16-shot</th></tr></thead>
+          <tbody>
+            <tr><td>MVTec-AD</td><td class="num">96.6</td><td class="num">96.9</td><td class="num">97.7</td><td class="num">98.2</td><td class="num">98.4</td></tr>
+            <tr><td>VisA</td><td class="num">87.4</td><td class="num">89.7</td><td class="num">92.6</td><td class="num">93.8</td><td class="num">94.8</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Against named competitors: on MVTec-AD, AnomalyDINO leads <strong>every</strong> reported shot count (1/2/4/8/16), including methods trained on extra data (ADP, APRIL-GAN). On VisA, APRIL-GAN edges it out at k∈{1,2}, the two are comparable at k=4, and AnomalyDINO takes the lead again at k∈{8,16} — the paper attributes this to APRIL-GAN's meta-training transferring less well when tested on a different dataset than it trained on.</p>
+    </section>
+
+    <section id="ablations">
+      <h2><span class="num">04</span> What actually moves the needle</h2>
+      <p class="section-dek">Five ablation findings worth remembering, each with the paper's own number attached.</p>
+      <ol class="plain">
+        <li><strong>Preprocessing is worth ~2 AUROC points</strong> on average (masking + rotation vs. neither) — but it's a per-category decision, not a free lunch: blindly rotating the reference set can <em>hurt</em> when orientation itself is the defect (a "misplaced"/rotated transistor stops looking anomalous once rotation is baked into the memory bank).</li>
+        <li><strong>Rotation alone can flip a category from unusable to strong</strong> — MVTec-AD "Screw" jumps from 65.6% to 89.2% 1-shot AUROC just by augmenting the single reference image with 8 rotations.</li>
+        <li><strong>The aggregation statistic matters more than it looks</strong> — mean of the top-1% patch distances beats taking the raw maximum distance (98.3% vs. 97.4% AUROC, MVTec-AD 16-shot); it's a small but consistent, free improvement.</li>
+        <li><strong>Bigger backbone ≠ better</strong> — the smallest DINOv2 (ViT-S, 21M params) is the <em>best</em> performer on MVTec-AD; larger backbones (B/L/G) only pull ahead on VisA, and only once k≥8. Complex multi-object scenes reward capacity; simple single-object scenes don't.</li>
+        <li><strong>Self-supervision is what's doing the work, not "being a ViT"</strong> — swapping DINOv2 for a same-sized ImageNet-supervised ViT costs at least 4 AUROC points on both datasets, with everything else held fixed.</li>
+      </ol>
+    </section>
+
+    <section id="limits">
+      <h2><span class="num">05</span> Where it breaks</h2>
+      <p class="section-dek">Two concrete failure modes the authors document themselves (Appendix B) — both follow directly from scoring patches independently.</p>
+
+      <div class="fail-card">
+        <h4>Semantic anomalies are invisible to it</h4>
+        <p>The method only asks "does this patch look like a normal patch?" — never "are these normally-fine parts in the right <em>arrangement</em>?" Their worked example: a <code>Cable</code> with two wire colors swapped. Each individual patch still matches something in the memory bank (both colors exist somewhere in a normal cable), so nothing looks locally wrong. Detection AUROC on this specific failure case: <strong>50.2% — chance level.</strong> A "Bent Wire" cable (a genuinely different-looking, sensory anomaly) is detected fine by the same pipeline.</p>
+      </div>
+      <div class="fail-card">
+        <h4>One bad reference image poisons the memory bank</h4>
+        <p>1-shot detection is only as good as the single sample you happened to pick. Worked example: a <code>Capsule</code> reference image where the imprinted text is rotated out of view — every other capsule that <em>does</em> show its text then gets flagged as anomalous, for the wrong reason. This is the direct cause of the high 1–2 shot variance visible in the paper's own result tables; it shrinks fast as k grows and M gets more diverse.</p>
+      </div>
+    </section>
+
+    <section id="zeroshot-math">
+      <h2><span class="num">06</span> The batched zero-shot trick, precisely</h2>
+      <p class="section-dek">Appendix D's extension, stated exactly as the paper derives it.</p>
+      <p>With no reference set, score each test sample <code>x<sup>(j)</sup></code> against a memory bank built from <em>every other</em> test sample in the batch: <code>M<sub>j</sub> := ⋃ {p<sub>m</sub> | f(x<sup>(i)</sup>) = (p₁,…,pₙ)}</code> for <code>x<sup>(i)</sup> ∈ X<sub>test</sub> \ {x<sup>(j)</sup>}</code>. Because <code>M<sub>j</sub></code> now contains anomalous patches too, plain 1-NN isn't safe — one lucky match to another defect would look "normal." The fix: replace the nearest neighbor with the <strong>mean of the closest 0.1% of patches</strong> in <code>M<sub>j</sub></code>, leaning on the assumption that most patches in a batch really are normal. Same downstream top-1% image aggregation as the few-shot path. Net cost: about the same ~60ms/sample.</p>
+    </section>
+
+    <footer>
+      <p class="fine">Simon Damm, Mike Laszkiewicz, Johannes Lederer, Asja Fischer. <em>AnomalyDINO: Boosting Patch-based Few-shot Anomaly Detection with DINOv2.</em> WACV 2025. arXiv:2405.14529.</p>
+      <div class="links">
+        <a href="https://arxiv.org/abs/2405.14529">arXiv:2405.14529</a>
+        <a href="https://github.com/dammsi/AnomalyDINO">github.com/dammsi/AnomalyDINO</a>
+      </div>
+      <p class="fine" style="margin-top:14px;">Related docs in this folder: <code>architecture.html</code> (code-level mechanism), <code>dataset.html</code> (VisA structure), <code>visa_results.html</code> (this project's own run), <code>normal_vs_anomaly.html</code> (visual examples).</p>
+    </footer>
+
+  </div>
+</div>

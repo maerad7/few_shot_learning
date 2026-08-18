@@ -1,0 +1,346 @@
+<title>Inside AnomalyDINO</title>
+<style>
+  .doc-root {
+    color-scheme: light;
+    --bg-page:        #f9f9f7;
+    --bg-surface:     #fcfcfb;
+    --bg-band:        #f2f1ec;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --grid:           #e1e0d9;
+    --axis:           #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --accent:         #2a78d6;
+    --accent-2:       #eb6834;
+    --accent-3:       #1baf7a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .doc-root {
+      color-scheme: dark;
+      --bg-page:        #0d0d0d;
+      --bg-surface:     #1a1a19;
+      --bg-band:        #202020;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --grid:           #2c2c2a;
+      --axis:           #383835;
+      --border:         rgba(255,255,255,0.10);
+      --accent:         #3987e5;
+      --accent-2:       #d95926;
+      --accent-3:       #199e70;
+    }
+  }
+  :root[data-theme="dark"] .doc-root {
+    color-scheme: dark;
+    --bg-page:        #0d0d0d;
+    --bg-surface:     #1a1a19;
+    --bg-band:        #202020;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --grid:           #2c2c2a;
+    --axis:           #383835;
+    --border:         rgba(255,255,255,0.10);
+    --accent:         #3987e5;
+    --accent-2:       #d95926;
+    --accent-3:       #199e70;
+  }
+
+  * { box-sizing: border-box; }
+  .doc-root {
+    background: var(--bg-page); color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.6; padding-bottom: 64px;
+  }
+  .mono { font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 28px; }
+
+  .masthead { padding: 56px 0 34px; border-bottom: 1px solid var(--border); }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin: 0 0 14px;
+  }
+  h1 { font-size: clamp(30px, 4.6vw, 42px); font-weight: 700; letter-spacing: -0.02em; margin: 0 0 12px; text-wrap: balance; }
+  .dek { font-size: 16px; color: var(--text-secondary); max-width: 64ch; margin: 0 0 20px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 12px; color: var(--text-secondary); background: var(--bg-surface);
+    border: 1px solid var(--border); border-radius: 5px; padding: 5px 10px;
+  }
+
+  section { padding: 40px 0; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: none; }
+  h2 {
+    font-size: 21px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 6px;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  h2 .num { color: var(--text-muted); font-family: ui-monospace, monospace; font-size: 15px; font-weight: 500; }
+  .section-dek { font-size: 14.5px; color: var(--text-secondary); max-width: 66ch; margin: 0 0 20px; }
+  p { font-size: 15px; color: var(--text-primary); max-width: 68ch; margin: 0 0 14px; }
+  p.tight { margin-bottom: 6px; }
+  strong { font-weight: 700; }
+  code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; font-size: 13px;
+    background: var(--bg-band); padding: 1px 6px; border-radius: 4px;
+  }
+  ul.plain { margin: 0 0 14px; padding-left: 20px; }
+  ul.plain li { font-size: 15px; margin-bottom: 8px; max-width: 64ch; }
+
+  /* figures */
+  figure { margin: 22px 0 8px; }
+  .fig-card {
+    background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 22px 20px 14px;
+  }
+  figure svg { width: 100%; height: auto; display: block; }
+  figcaption { font-size: 12.5px; color: var(--text-muted); margin-top: 10px; text-align: center; }
+  .dg-box { fill: var(--bg-surface); stroke: var(--text-secondary); stroke-width: 1.4; }
+  .dg-box-accent { fill: var(--bg-surface); stroke: var(--accent); stroke-width: 1.8; }
+  .dg-box-dim { fill: var(--bg-band); stroke: var(--axis); stroke-width: 1.2; stroke-dasharray: 3,3; }
+  .dg-title { fill: var(--text-primary); font-size: 12.5px; font-weight: 700; }
+  .dg-sub { fill: var(--text-secondary); font-size: 10.5px; }
+  .dg-arrow { stroke: var(--text-secondary); stroke-width: 1.4; fill: none; }
+  .dg-arrow-accent { stroke: var(--accent); stroke-width: 1.8; fill: none; }
+  .dg-label { fill: var(--text-muted); font-size: 10px; }
+  .dg-lane { fill: var(--text-muted); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* tables */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; margin: 16px 0; }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; background: var(--bg-surface); }
+  th, td { text-align: left; padding: 9px 14px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  thead th {
+    color: var(--text-secondary); font-weight: 600; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.04em; background: var(--bg-band);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td code { white-space: nowrap; }
+
+  footer { padding: 40px 0 8px; }
+  .fine { font-size: 11.5px; color: var(--text-muted); }
+</style>
+
+<div class="doc-root">
+  <div class="wrap">
+
+    <header class="masthead">
+      <p class="eyebrow">Model architecture · reference notes</p>
+      <h1>Inside AnomalyDINO</h1>
+      <p class="dek">AnomalyDINO (Damm et al., WACV 2025) detects defects without training a single weight. It leans entirely on a frozen DINOv2 backbone and a nearest-neighbor search over patch features — the only things that change between categories, or between few-shot and zero-shot, are which patches go into that search.</p>
+      <div class="badges">
+        <span class="badge">arXiv:2405.14529</span>
+        <span class="badge">backbone: DINOv2 (frozen)</span>
+        <span class="badge">no training / no fine-tuning</span>
+        <span class="badge">repo: anomalyDINO/AnomalyDINO</span>
+      </div>
+    </header>
+
+    <section id="idea">
+      <h2><span class="num">01</span> The core idea</h2>
+      <p class="section-dek">Every design choice below serves one goal: turn "is this patch normal?" into a distance to the nearest normal patch ever seen.</p>
+      <p>AnomalyDINO has no classifier and no decoder. A pretrained <strong>DINOv2</strong> vision transformer slices every image into a grid of patches and embeds each one in a 384–1536 dimensional space (depending on backbone size). Because DINOv2 was trained with self-supervised objectives across huge, diverse image corpora, patches that look structurally alike — regardless of object category — land close together in that space, and patches that don't (a scratch, a dent, a foreign object) land far from anything "normal."</p>
+      <p>Detection is then just <strong>k-nearest-neighbor search</strong>: embed a handful of known-good reference images once, store their patch vectors in a FAISS index (the "memory bank"), and for every patch of a new test image, look up its distance to the closest reference patch. A test image with a defect will have a cluster of patches that sit unusually far from anything in the memory bank.</p>
+    </section>
+
+    <section id="pipeline">
+      <h2><span class="num">02</span> The few-shot pipeline</h2>
+      <p class="section-dek">One frozen encoder, run twice — once to build the memory bank from k reference images, once to score a test image against it.</p>
+
+      <figure>
+        <div class="fig-card">
+          <svg viewBox="0 0 900 700" role="img" aria-label="Pipeline diagram: k reference images are rotated, encoded by frozen DINOv2, optionally masked to foreground patches, and loaded into a FAISS memory bank; a test image is encoded the same way, then its patches are matched via 1-nearest-neighbor search against the memory bank, producing a per-patch distance map that is aggregated into a single image anomaly score by averaging the top 1% most distant patches.">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="var(--text-secondary)"></path>
+              </marker>
+              <marker id="arrow-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"></path>
+              </marker>
+            </defs>
+
+            <text x="210" y="16" text-anchor="middle" class="dg-lane">reference path (built once per category)</text>
+            <text x="690" y="16" text-anchor="middle" class="dg-lane">test path (run per image)</text>
+
+            <!-- A1 -->
+            <rect class="dg-box" x="80" y="24" width="260" height="50" rx="8"></rect>
+            <text x="210" y="44" text-anchor="middle" class="dg-title">k reference images</text>
+            <text x="210" y="60" text-anchor="middle" class="dg-sub">known-good, sampled by seed</text>
+
+            <!-- B1 -->
+            <rect class="dg-box" x="560" y="24" width="260" height="50" rx="8"></rect>
+            <text x="690" y="44" text-anchor="middle" class="dg-title">1 test image</text>
+            <text x="690" y="60" text-anchor="middle" class="dg-sub">unseen, label unknown</text>
+
+            <!-- arrow A1->A3 -->
+            <line x1="210" y1="74" x2="210" y2="180" class="dg-arrow" marker-end="url(#arrow)"></line>
+            <text x="222" y="128" class="dg-label">×8 rotation augment (optional)</text>
+            <!-- arrow B1->B3 -->
+            <line x1="690" y1="74" x2="690" y2="180" class="dg-arrow" marker-end="url(#arrow)"></line>
+
+            <!-- A3 -->
+            <rect class="dg-box" x="80" y="184" width="260" height="52" rx="8"></rect>
+            <text x="210" y="205" text-anchor="middle" class="dg-title">frozen DINOv2 ViT</text>
+            <text x="210" y="221" text-anchor="middle" class="dg-sub">image → grid of patch tokens</text>
+
+            <!-- B3 -->
+            <rect class="dg-box" x="560" y="184" width="260" height="52" rx="8"></rect>
+            <text x="690" y="205" text-anchor="middle" class="dg-title">frozen DINOv2 ViT</text>
+            <text x="690" y="221" text-anchor="middle" class="dg-sub">image → grid of patch tokens</text>
+
+            <line x1="210" y1="236" x2="210" y2="260" class="dg-arrow" marker-end="url(#arrow)"></line>
+            <line x1="690" y1="236" x2="690" y2="260" class="dg-arrow" marker-end="url(#arrow)"></line>
+
+            <!-- A4 -->
+            <rect class="dg-box" x="80" y="264" width="260" height="52" rx="8"></rect>
+            <text x="210" y="285" text-anchor="middle" class="dg-title">foreground patch vectors</text>
+            <text x="210" y="301" text-anchor="middle" class="dg-sub">PCA 1st component &gt; τ (optional)</text>
+
+            <!-- B4 -->
+            <rect class="dg-box" x="560" y="264" width="260" height="52" rx="8"></rect>
+            <text x="690" y="285" text-anchor="middle" class="dg-title">foreground patch vectors</text>
+            <text x="690" y="301" text-anchor="middle" class="dg-sub">same mask rule, if enabled</text>
+
+            <line x1="210" y1="316" x2="210" y2="340" class="dg-arrow" marker-end="url(#arrow)"></line>
+
+            <!-- A5 memory bank -->
+            <rect class="dg-box-accent" x="80" y="344" width="260" height="56" rx="8"></rect>
+            <text x="210" y="367" text-anchor="middle" class="dg-title">FAISS memory bank</text>
+            <text x="210" y="384" text-anchor="middle" class="dg-sub">IndexFlatL2, L2-normalized vectors</text>
+
+            <!-- elbow arrows into kNN box -->
+            <path d="M 210 400 L 210 424 L 380 424" class="dg-arrow-accent" marker-end="url(#arrow-accent)"></path>
+            <path d="M 690 316 L 690 424 L 520 424" class="dg-arrow" marker-end="url(#arrow)"></path>
+
+            <!-- C1 kNN search -->
+            <rect class="dg-box-accent" x="300" y="428" width="300" height="54" rx="8"></rect>
+            <text x="450" y="450" text-anchor="middle" class="dg-title">1-NN search (k=1)</text>
+            <text x="450" y="467" text-anchor="middle" class="dg-sub">each test patch → nearest memory-bank patch</text>
+
+            <line x1="450" y1="482" x2="450" y2="508" class="dg-arrow" marker-end="url(#arrow)"></line>
+
+            <!-- C2 distance map -->
+            <rect class="dg-box" x="270" y="512" width="360" height="56" rx="8"></rect>
+            <text x="450" y="535" text-anchor="middle" class="dg-title">per-patch distance map</text>
+            <text x="450" y="551" text-anchor="middle" class="dg-sub">reshaped to grid, upsampled + Gaussian-smoothed</text>
+
+            <line x1="450" y1="568" x2="450" y2="594" class="dg-arrow" marker-end="url(#arrow)"></line>
+
+            <!-- C3 score -->
+            <rect class="dg-box-accent" x="230" y="598" width="440" height="60" rx="8"></rect>
+            <text x="450" y="622" text-anchor="middle" class="dg-title">image anomaly score</text>
+            <text x="450" y="640" text-anchor="middle" class="dg-sub">mean of the top 1% most distant patches</text>
+          </svg>
+        </div>
+        <figcaption>Fig. 1 — Both paths share one frozen DINOv2 encoder. The left path runs once per object category to build the memory bank; the right path runs once per test image. They meet only at the 1-NN search.</figcaption>
+      </figure>
+
+      <p><strong>Why "mean of the top 1%" instead of the single worst patch?</strong> Taking the max patch distance is brittle — one noisy token can flip the score. Averaging the worst 1% is an empirical tail statistic (value-at-risk at the 99th percentile): it still weights the defective region heavily, but a lone outlier patch can't dominate the whole image score.</p>
+    </section>
+
+    <section id="zeroshot">
+      <h2><span class="num">03</span> What zero-shot removes</h2>
+      <p class="section-dek">The batched zero-shot mode (<code>run_anomalydino_batched.py</code>) reuses the same encoder and the same top-1% aggregation — it just deletes the one component that needs curated "good" examples: the memory bank.</p>
+
+      <figure>
+        <div class="fig-card">
+          <svg viewBox="0 0 820 300" role="img" aria-label="Comparison diagram: in few-shot mode a test patch is matched against a memory bank built from k curated reference images; in zero-shot mode there is no reference set, so a test patch is instead matched against the patches of every other image in the same test batch, using the mean of the nearest 0.1 percent of patches.">
+            <defs>
+              <marker id="arrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="var(--text-secondary)"></path>
+              </marker>
+            </defs>
+
+            <rect class="dg-box" x="290" y="10" width="240" height="46" rx="8"></rect>
+            <text x="410" y="38" text-anchor="middle" class="dg-title">a test image's patch tokens</text>
+
+            <path d="M 410 56 L 410 76 L 210 76 L 210 96" class="dg-arrow" marker-end="url(#arrow2)"></path>
+            <path d="M 410 56 L 410 76 L 610 76 L 610 96" class="dg-arrow" marker-end="url(#arrow2)"></path>
+
+            <text x="210" y="90" text-anchor="middle" class="dg-lane">few-shot</text>
+            <text x="610" y="90" text-anchor="middle" class="dg-lane">zero-shot</text>
+
+            <rect class="dg-box-accent" x="80" y="100" width="260" height="66" rx="8"></rect>
+            <text x="210" y="124" text-anchor="middle" class="dg-title">k curated "good" images</text>
+            <text x="210" y="140" text-anchor="middle" class="dg-sub">encoded once, stored in a</text>
+            <text x="210" y="154" text-anchor="middle" class="dg-sub">FAISS memory bank</text>
+
+            <rect class="dg-box-dim" x="480" y="100" width="260" height="66" rx="8"></rect>
+            <text x="610" y="124" text-anchor="middle" class="dg-title">no reference set</text>
+            <text x="610" y="140" text-anchor="middle" class="dg-sub">every OTHER image already in</text>
+            <text x="610" y="154" text-anchor="middle" class="dg-sub">this category's test batch</text>
+
+            <line x1="210" y1="166" x2="210" y2="194" class="dg-arrow" marker-end="url(#arrow2)"></line>
+            <line x1="610" y1="166" x2="610" y2="194" class="dg-arrow" marker-end="url(#arrow2)"></line>
+
+            <rect class="dg-box" x="80" y="198" width="260" height="56" rx="8"></rect>
+            <text x="210" y="221" text-anchor="middle" class="dg-title">1-NN search</text>
+            <text x="210" y="237" text-anchor="middle" class="dg-sub">distance to closest memory-bank patch</text>
+
+            <rect class="dg-box" x="480" y="198" width="260" height="56" rx="8"></rect>
+            <text x="610" y="221" text-anchor="middle" class="dg-title">leave-one-out mean</text>
+            <text x="610" y="237" text-anchor="middle" class="dg-sub">mean of nearest 0.1% of patches, batch-wide</text>
+
+            <path d="M 210 254 L 210 276 L 410 276" class="dg-arrow" marker-end="url(#arrow2)"></path>
+            <path d="M 610 254 L 610 276 L 410 276" class="dg-arrow" marker-end="url(#arrow2)"></path>
+            <text x="410" y="272" text-anchor="middle" class="dg-sub">same downstream step —</text>
+            <text x="410" y="290" text-anchor="middle" class="dg-title">mean of top-1% patches → image score</text>
+          </svg>
+        </div>
+        <figcaption>Fig. 2 — The only edge that changes is what a patch gets compared against. Zero-shot trades a curated reference set for the rest of the test batch, so it needs zero "good" labels but assumes most images in a batch really are normal.</figcaption>
+      </figure>
+
+      <p>This is why zero-shot can occasionally <em>beat</em> low-shot few-shot in these results: with only 1–2 reference images, the memory bank is a thin, possibly unrepresentative sample of "normal," while the zero-shot batch draws on every test image in the category at once. It's also why zero-shot is fragile in principle — it silently assumes the test batch is mostly defect-free, an assumption few-shot never has to make.</p>
+    </section>
+
+    <section id="knobs">
+      <h2><span class="num">04</span> The tunable pieces</h2>
+      <p class="section-dek">Everything below is a preprocessing choice, not a learned parameter — no gradient ever touches the backbone.</p>
+
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Component</th><th>What it does</th><th>Where it's set</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Backbone</strong></td>
+              <td>Which frozen encoder embeds patches — <code>dinov2_vits14/vitb14/vitl14/vitg14</code> (384–1536-d), or a plain ViT-B/L for comparison (masking unsupported there).</td>
+              <td><code>--model_name</code>, <code>src/backbones.py</code></td>
+            </tr>
+            <tr>
+              <td><strong>Masking</strong></td>
+              <td>PCA the patch tokens to 1 component; threshold it to keep foreground patches and drop background, so background texture never pollutes the memory bank or the score.</td>
+              <td><code>compute_background_mask()</code>, <code>src/backbones.py</code></td>
+            </tr>
+            <tr>
+              <td><strong>Rotation augmentation</strong></td>
+              <td>Encode each reference image at 8 rotations (0°–315°) so the memory bank covers orientation variance the k shots didn't happen to show.</td>
+              <td><code>augment_image()</code>, <code>src/utils.py</code></td>
+            </tr>
+            <tr>
+              <td><strong>Preprocessing preset</strong></td>
+              <td><code>agnostic</code> = mask + rotate wherever it empirically helps; <code>informed</code> = per-object oracle settings from the paper's ablation; <code>masking_only</code> = mask, no rotation.</td>
+              <td><code>--preprocess</code>, <code>get_dataset_info()</code></td>
+            </tr>
+            <tr>
+              <td><strong>kNN metric</strong></td>
+              <td><code>L2_normalized</code> (default) L2-normalizes vectors before search, making Euclidean distance equivalent to cosine distance; plain <code>L2</code> skips that.</td>
+              <td><code>--knn_metric</code></td>
+            </tr>
+            <tr>
+              <td><strong>Aggregation statistic</strong></td>
+              <td><code>meantop1p</code> (default) averages the worst 1% of patches per image; alternatives take the raw max, or the max of the smoothed anomaly map.</td>
+              <td><code>mean_top1p()</code>, <code>src/post_eval.py</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <p class="fine">Sources: <code>src/backbones.py</code>, <code>src/detection.py</code>, <code>src/utils.py</code>, <code>src/post_eval.py</code>, <code>run_anomalydino.py</code>, <code>run_anomalydino_batched.py</code> in this repo · Damm et al., <em>AnomalyDINO: Boosting Patch-based Few-shot Anomaly Detection with DINOv2</em>, WACV 2025 (arXiv:2405.14529).</p>
+    </footer>
+
+  </div>
+</div>

@@ -1,0 +1,299 @@
+<title>VisA Dataset Structure</title>
+<style>
+  .doc-root {
+    color-scheme: light;
+    --bg-page:        #f9f9f7;
+    --bg-surface:     #fcfcfb;
+    --bg-band:        #f2f1ec;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --grid:           #e1e0d9;
+    --axis:           #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --accent:         #2a78d6;
+    --accent-2:       #eb6834;
+    --accent-3:       #1baf7a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .doc-root {
+      color-scheme: dark;
+      --bg-page:        #0d0d0d;
+      --bg-surface:     #1a1a19;
+      --bg-band:        #202020;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --grid:           #2c2c2a;
+      --axis:           #383835;
+      --border:         rgba(255,255,255,0.10);
+      --accent:         #3987e5;
+      --accent-2:       #d95926;
+      --accent-3:       #199e70;
+    }
+  }
+  :root[data-theme="dark"] .doc-root {
+    color-scheme: dark;
+    --bg-page:        #0d0d0d;
+    --bg-surface:     #1a1a19;
+    --bg-band:        #202020;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --grid:           #2c2c2a;
+    --axis:           #383835;
+    --border:         rgba(255,255,255,0.10);
+    --accent:         #3987e5;
+    --accent-2:       #d95926;
+    --accent-3:       #199e70;
+  }
+
+  * { box-sizing: border-box; }
+  .doc-root {
+    background: var(--bg-page); color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.6; padding-bottom: 64px;
+  }
+  .mono { font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 28px; }
+
+  .masthead { padding: 56px 0 34px; border-bottom: 1px solid var(--border); }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin: 0 0 14px;
+  }
+  h1 { font-size: clamp(30px, 4.6vw, 42px); font-weight: 700; letter-spacing: -0.02em; margin: 0 0 12px; text-wrap: balance; }
+  .dek { font-size: 16px; color: var(--text-secondary); max-width: 66ch; margin: 0 0 20px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 12px; color: var(--text-secondary); background: var(--bg-surface);
+    border: 1px solid var(--border); border-radius: 5px; padding: 5px 10px;
+  }
+
+  section { padding: 40px 0; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: none; }
+  h2 {
+    font-size: 21px; font-weight: 700; letter-spacing: -0.01em; margin: 0 0 6px;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  h2 .num { color: var(--text-muted); font-family: ui-monospace, monospace; font-size: 15px; font-weight: 500; }
+  .section-dek { font-size: 14.5px; color: var(--text-secondary); max-width: 68ch; margin: 0 0 20px; }
+  p { font-size: 15px; color: var(--text-primary); max-width: 70ch; margin: 0 0 14px; }
+  strong { font-weight: 700; }
+  code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; font-size: 13px;
+    background: var(--bg-band); padding: 1px 6px; border-radius: 4px;
+  }
+
+  /* stat tiles */
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 4px; }
+  .stat-tile { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .stat-label { font-size: 12px; color: var(--text-secondary); margin: 0 0 8px; }
+  .stat-value { font-size: 28px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+  .stat-value .unit { font-size: 15px; font-weight: 500; color: var(--text-secondary); }
+
+  /* tree block */
+  .tree-card {
+    background: var(--bg-surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px 22px; overflow-x: auto; margin: 16px 0;
+  }
+  .tree-card pre {
+    margin: 0; font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 13px; line-height: 1.65; color: var(--text-primary); white-space: pre;
+  }
+  .tree-card .c { color: var(--text-muted); }
+  .tree-card .acc { color: var(--accent); }
+
+  /* figures */
+  figure { margin: 22px 0 8px; }
+  .fig-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px 20px 14px; }
+  figure svg { width: 100%; height: auto; display: block; }
+  figcaption { font-size: 12.5px; color: var(--text-muted); margin-top: 10px; text-align: center; }
+  .dg-box { fill: var(--bg-surface); stroke: var(--text-secondary); stroke-width: 1.4; }
+  .dg-box-accent { fill: var(--bg-surface); stroke: var(--accent); stroke-width: 1.8; }
+  .dg-title { fill: var(--text-primary); font-size: 12.5px; font-weight: 700; }
+  .dg-sub { fill: var(--text-secondary); font-size: 10.5px; font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; }
+  .dg-arrow { stroke: var(--text-secondary); stroke-width: 1.4; fill: none; }
+  .dg-label { fill: var(--text-muted); font-size: 10.5px; }
+  .dg-label-accent { fill: var(--accent); font-size: 10.5px; font-weight: 600; }
+
+  /* tables */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; margin: 16px 0; }
+  table { border-collapse: collapse; width: 100%; min-width: 620px; background: var(--bg-surface); }
+  th, td { text-align: left; padding: 9px 14px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  td.num, th.num { text-align: right; font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+  thead th {
+    color: var(--text-secondary); font-weight: 600; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.04em; background: var(--bg-band);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tfoot td { font-weight: 700; border-top: 1px solid var(--axis); border-bottom: none; }
+  td code { white-space: nowrap; }
+
+  footer { padding: 40px 0 8px; }
+  .fine { font-size: 11.5px; color: var(--text-muted); }
+</style>
+
+<div class="doc-root">
+  <div class="wrap">
+
+    <header class="masthead">
+      <p class="eyebrow">Dataset reference · structure notes</p>
+      <h1>VisA Dataset Structure</h1>
+      <p class="dek">VisA (Visual Anomaly) is Amazon's 12-category industrial anomaly detection benchmark. On disk it looks nothing like the folder layout most anomaly-detection code expects — the train/test split lives entirely in a CSV, not in directories. This page documents the raw layout and how this project converts it for AnomalyDINO.</p>
+      <div class="badges">
+        <span class="badge">12 object categories</span>
+        <span class="badge">10,821 images</span>
+        <span class="badge">1.9 GB</span>
+        <span class="badge">CC BY 4.0</span>
+        <span class="badge">github.com/amazon-science/spot-diff</span>
+      </div>
+    </header>
+
+    <section id="glance">
+      <h2><span class="num">01</span> At a glance</h2>
+      <p class="section-dek">Counted from <code>split_csv/1cls.csv</code>, the standard one-class benchmark split used in this project.</p>
+      <div class="stat-row">
+        <div class="stat-tile"><p class="stat-label">Categories</p><p class="stat-value">12</p></div>
+        <div class="stat-tile"><p class="stat-label">Train (normal)</p><p class="stat-value">8,659</p></div>
+        <div class="stat-tile"><p class="stat-label">Test (normal)</p><p class="stat-value">962</p></div>
+        <div class="stat-tile"><p class="stat-label">Test (anomaly)</p><p class="stat-value">1,200</p></div>
+      </div>
+    </section>
+
+    <section id="raw">
+      <h2><span class="num">02</span> The raw on-disk layout</h2>
+      <p class="section-dek">Every category has the same flat shape: all normal images in one folder, all anomalous images and their masks in two more. There is <strong>no train/ or test/ directory anywhere</strong> — that split is defined later, in a CSV.</p>
+      <div class="tree-card">
+<pre>VisA/
+├── meta.json                      <span class="c"># mirrors 1cls.csv as JSON, {train,test} → per-category lists</span>
+├── split_csv/
+│   ├── 1cls.csv                   <span class="c"># standard one-class split — used by this project</span>
+│   ├── 2cls_fewshot.csv           <span class="c"># supervised split, small anomaly sample in train</span>
+│   └── 2cls_highshot.csv          <span class="c"># supervised split, larger anomaly sample in train</span>
+├── candle/
+│   ├── image_anno.csv             <span class="c"># flat per-image label/mask listing, no split column</span>
+│   └── Data/
+│       ├── Images/
+│       │   ├── Normal/            <span class="c"># 0000.JPG … 0999.JPG (1000 files)</span>
+│       │   └── Anomaly/           <span class="c"># 000.JPG … 099.JPG  (100 files)</span>
+│       └── Masks/
+│           └── Anomaly/           <span class="c"># 000.png … 099.png  (binary, one per anomaly image)</span>
+├── capsules/  <span class="c">(same shape)</span>
+├── cashew/    <span class="c">(same shape)</span>
+├── … <span class="c">8 more categories, same shape</span>
+└── pipe_fryum/ <span class="c">(same shape)</span></pre>
+      </div>
+      <p>Filenames don't reliably tell you the split either — <code>candle/Data/Images/Normal/</code> mixes future train and test images together; <code>Masks/Anomaly/</code> holds a binary PNG for every anomalous image, at the same resolution as its source photo, and only for anomalous images (normal images have no mask).</p>
+    </section>
+
+    <section id="splits">
+      <h2><span class="num">03</span> The split lives in a CSV, not a folder</h2>
+      <p class="section-dek">Three interchangeable split files ship with VisA, all with the same <code>object,split,label,image,mask</code> header and the same 10,821 rows — they just draw the train/test line differently.</p>
+
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>File</th><th>Use case</th><th>candle example (train / test-good / test-bad)</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>1cls.csv</code></td>
+              <td>Standard <strong>unsupervised</strong> one-class AD benchmark — train sees only normal images; used by this project (few-shot &amp; zero-shot).</td>
+              <td class="num">900 / 100 / 100</td>
+            </tr>
+            <tr>
+              <td><code>2cls_fewshot.csv</code></td>
+              <td><strong>Supervised</strong> split — a small number of labeled anomalies also placed in train.</td>
+              <td class="num">200+20 / 800 / 80</td>
+            </tr>
+            <tr>
+              <td><code>2cls_highshot.csv</code></td>
+              <td><strong>Supervised</strong> split with a larger labeled-anomaly training sample.</td>
+              <td class="num">600+60 / 400 / 40</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p><code>meta.json</code> mirrors <code>1cls.csv</code> as JSON (<code>{"train": {...}, "test": {...}}</code>, one list per category, each entry <code>{img_path, mask_path, cls_name, anomaly}</code>) — some AD frameworks read this instead of the CSV. Per-category <code>image_anno.csv</code> is <em>not</em> a split file: it just enumerates every image and its label/mask for that one category, with no train/test column.</p>
+    </section>
+
+    <section id="convert">
+      <h2><span class="num">04</span> Converting for AnomalyDINO</h2>
+      <p class="section-dek">AnomalyDINO (and most MVTec-AD-style AD code) expects an actual <code>train/</code> · <code>test/</code> · <code>ground_truth/</code> folder split. This project's <code>scripts/convert_visa_1cls.py</code> builds that layout by reading <code>1cls.csv</code> and symlinking each file to its target — no image data is duplicated.</p>
+
+      <figure>
+        <div class="fig-card">
+          <svg viewBox="0 0 900 300" role="img" aria-label="Diagram: the raw VisA layout, with all normal images in one folder and all anomaly images and masks in two more, is converted by scripts/convert_visa_1cls.py — which reads split_csv/1cls.csv and symlinks each file to its target — into the MVTec-style layout AnomalyDINO expects, with separate train/good, test/good, test/bad, and ground_truth/bad folders per category.">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 z" fill="var(--text-secondary)"></path>
+              </marker>
+            </defs>
+
+            <rect class="dg-box" x="20" y="30" width="270" height="220" rx="10"></rect>
+            <text x="155" y="58" text-anchor="middle" class="dg-title">raw VisA release</text>
+            <text x="45" y="88" class="dg-sub">&lt;object&gt;/Data/</text>
+            <text x="60" y="108" class="dg-sub">Images/Normal/*.JPG</text>
+            <text x="60" y="128" class="dg-sub">Images/Anomaly/*.JPG</text>
+            <text x="60" y="148" class="dg-sub">Masks/Anomaly/*.png</text>
+            <text x="45" y="178" class="dg-sub">split_csv/1cls.csv</text>
+            <text x="60" y="198" class="dg-sub">object,split,label,</text>
+            <text x="60" y="216" class="dg-sub">image,mask</text>
+
+            <line x1="290" y1="140" x2="380" y2="140" class="dg-arrow" marker-end="url(#arrow)"></line>
+            <text x="335" y="118" text-anchor="middle" class="dg-label-accent">reads csv,</text>
+            <text x="335" y="132" text-anchor="middle" class="dg-label-accent">symlinks files</text>
+            <text x="335" y="158" text-anchor="middle" class="dg-label">convert_visa_1cls.py</text>
+
+            <rect class="dg-box-accent" x="390" y="30" width="290" height="220" rx="10"></rect>
+            <text x="535" y="58" text-anchor="middle" class="dg-title">data/VisA_pytorch/1cls/</text>
+            <text x="415" y="88" class="dg-sub">&lt;object&gt;/</text>
+            <text x="430" y="108" class="dg-sub">train/good/*.JPG</text>
+            <text x="430" y="128" class="dg-sub">test/good/*.JPG</text>
+            <text x="430" y="148" class="dg-sub">test/bad/*.JPG</text>
+            <text x="430" y="168" class="dg-sub">ground_truth/bad/*.png</text>
+            <text x="415" y="198" class="dg-sub">(symlinks, not copies —</text>
+            <text x="415" y="216" class="dg-sub"> +1.9GB avoided)</text>
+          </svg>
+        </div>
+        <figcaption>Fig. 1 — <code>train=normal → train/good</code>, <code>test=normal → test/good</code>, <code>test=anomaly → test/bad</code> + its mask into <code>ground_truth/bad</code> (stem-matched, no <code>_mask</code> suffix — VisA's own convention, distinct from MVTec's).</figcaption>
+      </figure>
+    </section>
+
+    <section id="categories">
+      <h2><span class="num">05</span> Per-category counts &amp; image size</h2>
+      <p class="section-dek">Each category has its own fixed image resolution (masks match their source image exactly); counts are from the <code>1cls.csv</code> split actually used for the few-shot/zero-shot runs.</p>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th>Category</th><th class="num">Train / good</th><th class="num">Test / good</th><th class="num">Test / bad</th><th class="num">Resolution</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>candle</td><td class="num">900</td><td class="num">100</td><td class="num">100</td><td class="num">1284 × 1168</td></tr>
+            <tr><td>capsules</td><td class="num">542</td><td class="num">60</td><td class="num">100</td><td class="num">1500 × 1000</td></tr>
+            <tr><td>cashew</td><td class="num">450</td><td class="num">50</td><td class="num">100</td><td class="num">1274 × 1176</td></tr>
+            <tr><td>chewinggum</td><td class="num">453</td><td class="num">50</td><td class="num">100</td><td class="num">1342 × 1118</td></tr>
+            <tr><td>fryum</td><td class="num">450</td><td class="num">50</td><td class="num">100</td><td class="num">1500 × 1000</td></tr>
+            <tr><td>macaroni1</td><td class="num">900</td><td class="num">100</td><td class="num">100</td><td class="num">1500 × 1000</td></tr>
+            <tr><td>macaroni2</td><td class="num">900</td><td class="num">100</td><td class="num">100</td><td class="num">1500 × 1000</td></tr>
+            <tr><td>pcb1</td><td class="num">904</td><td class="num">100</td><td class="num">100</td><td class="num">1404 × 1070</td></tr>
+            <tr><td>pcb2</td><td class="num">901</td><td class="num">100</td><td class="num">100</td><td class="num">1404 × 1070</td></tr>
+            <tr><td>pcb3</td><td class="num">905</td><td class="num">101</td><td class="num">100</td><td class="num">1562 × 960</td></tr>
+            <tr><td>pcb4</td><td class="num">904</td><td class="num">101</td><td class="num">100</td><td class="num">1358 × 1104</td></tr>
+            <tr><td>pipe_fryum</td><td class="num">450</td><td class="num">50</td><td class="num">100</td><td class="num">1300 × 1154</td></tr>
+          </tbody>
+          <tfoot>
+            <tr><td>Total</td><td class="num">8,659</td><td class="num">962</td><td class="num">1,200</td><td class="num">—</td></tr>
+          </tfoot>
+        </table>
+      </div>
+      <p>Images are JPEG (RGB, baseline); masks are 8-bit grayscale PNG, present only for <code>test/bad</code> images, always matching the source image's resolution exactly.</p>
+    </section>
+
+    <footer>
+      <p class="fine">Raw dataset: <code>/media/doseok/…/data/VisA/</code> · Conversion script: <code>AnomalyDINO/scripts/convert_visa_1cls.py</code> · Converted layout: <code>AnomalyDINO/data/VisA_pytorch/1cls/</code> · Source: Zou et al., <em>SPot-the-Difference Self-Supervised Pre-training for Anomaly Detection and Segmentation</em>, ECCV 2022 (github.com/amazon-science/spot-diff).</p>
+    </footer>
+
+  </div>
+</div>
